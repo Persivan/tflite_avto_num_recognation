@@ -19,7 +19,6 @@ print('TensorFlow version:', tf.__version__)
 
 
 
-
 def getFuckingNuumber(image_cv2):
     # print(image_cv2)
 
