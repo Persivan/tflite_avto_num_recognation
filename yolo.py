@@ -2,6 +2,7 @@
 # https://www.kaggle.com/code/paulojunqueira/yolo-v8-vehicles-detecting-counting
 #
 
+
 import cv2
 from ultralytics import YOLO
 
@@ -29,50 +30,56 @@ verbose = False
 # Scaling percentage of original frame
 scale_percent = 50
 
-def yolo_car_checker(video):
-    # Objects to detect Yolo
-    class_IDS = [2, 3, 5, 7]
-    # Auxiliary variables
-    centers_old = {}
-    centers_new = {}
-    obj_id = 0
-    veiculos_contador_in = dict.fromkeys(class_IDS, 0)
-    veiculos_contador_out = dict.fromkeys(class_IDS, 0)
-    end = []
-    frames_list = []
-    cy_linha = int(1500 * scale_percent / 100)
-    cx_sentido = int(2000 * scale_percent / 100)
-    offset = int(8 * scale_percent / 100)
-    contador_in = 0
-    contador_out = 0
-    print(f'[INFO] - Verbose during Prediction: {verbose}')
+def yolo_car_checker(frame):
+        """
+        На вход ожидает Mat img
+        На выходе выдает [[lable],[crop_car_img]] и Mat img
+        """
+    # # Objects to detect Yolo
+        class_IDS = [2, 3, 5, 7]
+    # # Auxiliary variables
+    # centers_old = {}
+    # centers_new = {}
+    # obj_id = 0
+    # veiculos_contador_in = dict.fromkeys(class_IDS, 0)
+    # veiculos_contador_out = dict.fromkeys(class_IDS, 0)
+    # end = []
+    # frames_list = []
+    # cy_linha = int(1500 * scale_percent / 100)
+    # cx_sentido = int(2000 * scale_percent / 100)
+    # offset = int(8 * scale_percent / 100)
+    # contador_in = 0
+    # contador_out = 0
+    # print(f'[INFO] - Verbose during Prediction: {verbose}')
 
-    # Original informations of video
-    height = int(video.get(cv2.CAP_PROP_FRAME_HEIGHT))
-    width = int(video.get(cv2.CAP_PROP_FRAME_WIDTH))
-    fps = video.get(cv2.CAP_PROP_FPS)
-    print('[INFO] - Original Dim: ', (width, height))
+    # # Original informations of video
+    # height = int(video.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    # width = int(video.get(cv2.CAP_PROP_FRAME_WIDTH))
+    # fps = video.get(cv2.CAP_PROP_FPS)
+    # print('[INFO] - Original Dim: ', (width, height))
 
-    # Scaling Video for better performance
-    if scale_percent != 100:
-        print('[INFO] - Scaling change may cause errors in pixels lines ')
-        width = int(width * scale_percent / 100)
-        height = int(height * scale_percent / 100)
-        print('[INFO] - Dim Scaled: ', (width, height))
+    # # Scaling Video for better performance
+    # if scale_percent != 100:
+    #     print('[INFO] - Scaling change may cause errors in pixels lines ')
+    #     width = int(width * scale_percent / 100)
+    #     height = int(height * scale_percent / 100)
+    #     print('[INFO] - Dim Scaled: ', (width, height))
 
-    for i in tqdm(range(int(video.get(cv2.CAP_PROP_FRAME_COUNT)))):
-        # Return values
-        # truk = False
+    # for i in tqdm(range(int(video.get(cv2.CAP_PROP_FRAME_COUNT)))):
+    #     # Return values
+    #     # truk = False
         car_detected_cv = []
+        car_lables = []
+        sqr_arr = []
 
-        # reading frame from video
-        _, frame = video.read()
+    #     # reading frame from video
+    #     _, frame = video.read()
 
-        # Applying resizing of read frame
-        frame = risize_frame(frame, scale_percent)
+    #     # Applying resizing of read frame
+    #     frame = risize_frame(frame, scale_percent)
 
-        if verbose:
-            print('Dimension Scaled(frame): ', (frame.shape[1], frame.shape[0]))
+    #     if verbose:
+    #         print('Dimension Scaled(frame): ', (frame.shape[1], frame.shape[0]))
 
         # Getting predictions
         y_hat = model.predict(frame, conf=0.7, classes=class_IDS, verbose=False)
@@ -101,6 +108,8 @@ def yolo_car_checker(video):
             crop = frame.copy()
             crop = crop[ymin:ymax, xmin:xmax]
             car_detected_cv.append(crop)
+            car_lables.append(labels[ix])
+            sqr_arr.append([(xmin, ymin), (xmax, ymax)])
 
             if labels[ix] != 'truck':
                 cv2.rectangle(frame, (xmin, ymin), (xmax, ymax), (255, 0, 0), 3)  # box
@@ -121,11 +130,11 @@ def yolo_car_checker(video):
                 break
 
             # Checking if the center of recognized vehicle is in the area given by the transition line + offset and transition line - offset
-            if (center_y < (cy_linha + offset)) and (center_y > (cy_linha - offset)):
-                if (center_x >= 0) and (center_x <= cx_sentido):
-                    contador_in += 1
-                    veiculos_contador_in[category] += 1
-                else:
-                    contador_out += 1
-                    veiculos_contador_out[category] += 1
-        return frame, car_detected_cv
+            # if (center_y < (cy_linha + offset)) and (center_y > (cy_linha - offset)):
+            #     if (center_x >= 0) and (center_x <= cx_sentido):
+            #         contador_in += 1
+            #         veiculos_contador_in[category] += 1
+            #     else:
+            #         contador_out += 1
+            #         veiculos_contador_out[category] += 1
+        return  [car_lables, car_detected_cv], frame, sqr_arr
