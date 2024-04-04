@@ -3,3 +3,4 @@ __pycache__
 model_resnet.tflite
 model1_nomer.tfile
 yolov8x.pt
+.venv
