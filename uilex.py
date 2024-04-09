@@ -14,7 +14,7 @@ class App(QWidget):
     def __init__(self):
         super().__init__()
 
-        self.counter = 0
+        self.counter = 3
         self.setWindowTitle("Qt live label demo")
         self.setFixedWidth(800)
         self.setFixedHeight(460)
@@ -93,7 +93,7 @@ class App(QWidget):
         car_detected_cv = cars[1]
         filtered_img = cv_img.copy()
         for i in range(len(car_detected_cv)):
-            if cars[0][i] in self.filters or cars[2][i] in self.filters:
+            if cars[0][i] in self.filters and cars[2][i] in self.filters:
                 cars_filtered[0].append(cars[0][i])
                 cars_filtered[1].append(cars[1][i])
                 cars_filtered[2].append(cars[2][i])
