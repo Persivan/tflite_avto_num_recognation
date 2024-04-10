@@ -110,7 +110,7 @@ def yolo_car_checker(frame):
             res_lables.append(labels[ix])
             sqr_arr.append([(xmin, ymin), (xmax, ymax)])
 
-            cv2.rectangle(frame, (xmin, ymin), (xmax, ymax), (255, 0, 255), 3)  # box
+            cv2.rectangle(frame, (xmin, ymin), (xmax, ymax), (255, 0, 0), 3)  # box
 
         for ix, row in enumerate(positions_frame.iterrows()):
             # Getting the coordinates of each vehicle (row)
