@@ -36,7 +36,7 @@ def yolo_car_checker(frame):
         На выходе выдает [[lable],[crop_car_img]] и Mat img
         """
     # # Objects to detect Yolo
-        class_IDS = [2, 3, 5, 7]
+        class_IDS = [range(0, 79)]
     # # Auxiliary variables
     # centers_old = {}
     # centers_new = {}
@@ -68,8 +68,7 @@ def yolo_car_checker(frame):
     # for i in tqdm(range(int(video.get(cv2.CAP_PROP_FRAME_COUNT)))):
     #     # Return values
     #     # truk = False
-        car_detected_cv = []
-        car_lables = []
+        res_lables = []
         sqr_arr = []
 
     #     # reading frame from video
@@ -97,6 +96,7 @@ def yolo_car_checker(frame):
         #print(positions_frame)
         # Translating the numeric class labels to text
         labels = [dict_classes[i] for i in classes]
+        # print(f"!!!!!!!!!!!!!!\n{labels}")
         for ix, row in enumerate(positions_frame.iterrows()):
             # Getting the coordinates of each vehicle (row)
             xmin, ymin, xmax, ymax, confidence, category, = row[1].astype('int')
@@ -107,12 +107,10 @@ def yolo_car_checker(frame):
             # drawing center and bounding-box of vehicle in the given frame
             crop = frame.copy()
             crop = crop[ymin:ymax, xmin:xmax]
-            car_detected_cv.append(crop)
-            car_lables.append(labels[ix])
+            res_lables.append(labels[ix])
             sqr_arr.append([(xmin, ymin), (xmax, ymax)])
 
-            if labels[ix] != 'truck':
-                cv2.rectangle(frame, (xmin, ymin), (xmax, ymax), (255, 0, 0), 3)  # box
+            cv2.rectangle(frame, (xmin, ymin), (xmax, ymax), (255, 0, 255), 3)  # box
 
         for ix, row in enumerate(positions_frame.iterrows()):
             # Getting the coordinates of each vehicle (row)
@@ -121,13 +119,17 @@ def yolo_car_checker(frame):
             # Calculating the center of the bounding-box
             center_x, center_y = int(((xmax + xmin)) / 2), int((ymax + ymin) / 2)
 
-            if labels[ix] == 'truck':
-                cv2.rectangle(frame, (xmin, ymin), (xmax, ymax), (0, 0, 255), 3)
-                cv2.putText(img=frame, text=labels[ix] + ' '+  str(np.round(conf[ix], 2)),
-                            org=(xmin, ymin - 30), fontFace=cv2.FONT_HERSHEY_TRIPLEX, fontScale=1, color=(0, 0, 255),
+            # if labels[ix] == 'truck':
+            #     cv2.rectangle(frame, (xmin, ymin), (xmax, ymax), (0, 0, 255), 3)
+            #     cv2.putText(img=frame, text=labels[ix] + ' '+  str(np.round(conf[ix], 2)),
+            #                 org=(xmin, ymin - 30), fontFace=cv2.FONT_HERSHEY_TRIPLEX, fontScale=1, color=(0, 0, 255),
+            #                 thickness=2)
+            #     # truk = True
+            #     break
+            cv2.rectangle(frame, (xmin, ymin), (xmax, ymax), (255, 0, 0), 3)
+            cv2.putText(img=frame, text=labels[ix] + ' '+  str(np.round(conf[ix], 2)),
+                            org=(xmin, ymin - 30), fontFace=cv2.FONT_HERSHEY_TRIPLEX, fontScale=1, color=(255, 0, 0),
                             thickness=2)
-                # truk = True
-                break
 
             # Checking if the center of recognized vehicle is in the area given by the transition line + offset and transition line - offset
             # if (center_y < (cy_linha + offset)) and (center_y > (cy_linha - offset)):
@@ -137,4 +139,4 @@ def yolo_car_checker(frame):
             #     else:
             #         contador_out += 1
             #         veiculos_contador_out[category] += 1
-        return  [car_lables, car_detected_cv], frame, sqr_arr
+        return  res_lables, frame, sqr_arr
