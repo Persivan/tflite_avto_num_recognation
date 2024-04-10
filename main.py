@@ -16,6 +16,7 @@ class Window(QMainWindow):
         self.cv_img = None
         self.sqr_arr = None
         self.filename = None
+        self.filtered_img = None
 
         # Характеристики окна
         self.setWindowTitle("Item checker")
@@ -59,7 +60,7 @@ class Window(QMainWindow):
         self.total_count_label.setFont(QFont('Times', 13))
         self.total_count_label.setGeometry(QtCore.QRect(20, 675, 100, 100))
 
-        # Кнопка для начала детекта
+        # Кнопка для начала
         self.start_button = QPushButton(self)
         self.start_button.setText('Старт')
         self.start_button.setDisabled(True)
@@ -78,11 +79,23 @@ class Window(QMainWindow):
         self.filtered_count_label.setFont(QFont('Times', 13))
         self.filtered_count_label.setGeometry(QtCore.QRect(680, 675, 100, 100))
 
+        # Кнопка Сохранить
+        self.save_button = QPushButton(self)
+        self.save_button.setText('💾')
+        self.save_button.setDisabled(True)
+        self.save_button.setGeometry(QtCore.QRect(728, 730, 60, 60))
+        self.save_button.setFont(QFont('Times', 15))
+        self.save_button.setObjectName("save_button")
+        self.save_button.clicked.connect(self.saveImage)
+
+    def saveImage(self):
+        fileName, _ = QFileDialog.getSaveFileName(self, "Save Image", None, "Image files (*.png)")
+        if fileName:
+            cv2.imwrite(fileName, self.filtered_img)
+
     def openFileNameDialog(self):
         """Диалоговое окно с выбором файла"""
-        options = QFileDialog.Options()
-        options |= QFileDialog.DontUseNativeDialog
-        fileName, _ = QFileDialog.getOpenFileName(self, 'Open file','c:\'', "Image files (*.jpg, *.png)")
+        fileName, _ = QFileDialog.getOpenFileName(self, 'Open Image', None, "Image files (*.jpg, *.png)")
         if fileName:
             self.filename = fileName
             self.start_button.setEnabled(True)
@@ -130,16 +143,18 @@ class Window(QMainWindow):
     def use_filter(self):
         """Применение фильтров"""
         count = 0
-        filtered_img = self.cv_img.copy()
+        self.filtered_img = self.cv_img.copy()
         for i in range(len(self.recognited_objects)):                                                   # Нанесение квадратиков на изображение с фильтрами
             if 'Все' in self.filter or self.recognited_objects[i] in self.filter:
                 count += 1
-                cv2.rectangle(filtered_img, self.sqr_arr[i][0], self.sqr_arr[i][1], (255, 0, 255), 3)   # Нанесение квадратика на изображение с фильтрами
-        cv2.resize(filtered_img, (780, 450))                                                            # Изменяем размер картинки
-        self.recognition_with_filters_image.setPixmap(self.convert_cv_qt(filtered_img, 780, 448))       # Кадр с квадратиками с фильтрами
+                cv2.rectangle(self.filtered_img, self.sqr_arr[i][0], self.sqr_arr[i][1], (255, 0, 255), 3)   # Нанесение квадратика на изображение с фильтрами
+        self.recognition_with_filters_image.setPixmap(self.convert_cv_qt(self.filtered_img, 780, 448))       # Кадр с квадратиками с фильтрами
 
         # Выводим количество отфильтрованных объектов
         self.filtered_count_label.setText(str(count))
+
+        # Разблокируем кнопку Сохранить
+        self.save_button.setEnabled(True)
 
     def convert_cv_qt(self, cv_img, width = 380, height = 220):
         """Конвертация CV изображения в QPixmap"""
