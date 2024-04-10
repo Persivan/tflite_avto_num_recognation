@@ -49,6 +49,16 @@ class Window(QMainWindow):
         self.itemComboBox.setFont(QFont('Times', 14))
         self.itemComboBox.activated.connect(self.comboBoxChanged)
 
+        # Вывод общего количества
+        self.total_count_label_text = QLabel(self)
+        self.total_count_label_text.setText('Всего:')
+        self.total_count_label_text.setFont(QFont('Times', 13))
+        self.total_count_label_text.setGeometry(QtCore.QRect(20, 655, 100, 100))
+        self.total_count_label = QLabel(self)
+        self.total_count_label.setText('0')
+        self.total_count_label.setFont(QFont('Times', 13))
+        self.total_count_label.setGeometry(QtCore.QRect(20, 675, 100, 100))
+
         # Кнопка для начала детекта
         self.start_button = QPushButton(self)
         self.start_button.setText('Старт')
@@ -57,6 +67,16 @@ class Window(QMainWindow):
         self.start_button.setFont(QFont('Times', 15))
         self.start_button.setObjectName("start_button")
         self.start_button.clicked.connect(self.process_image)
+
+        # Вывод фильтрованного количества
+        self.filtered_count_label_text = QLabel(self)
+        self.filtered_count_label_text.setText('С фильтром:')
+        self.filtered_count_label_text.setFont(QFont('Times', 13))
+        self.filtered_count_label_text.setGeometry(QtCore.QRect(680, 655, 150, 100))
+        self.filtered_count_label = QLabel(self)
+        self.filtered_count_label.setText('0')
+        self.filtered_count_label.setFont(QFont('Times', 13))
+        self.filtered_count_label.setGeometry(QtCore.QRect(680, 675, 100, 100))
 
     def openFileNameDialog(self):
         """Диалоговое окно с выбором файла"""
@@ -84,14 +104,21 @@ class Window(QMainWindow):
         self.cv_img = cv2.imread(self.filename)
 
         # Обработка через нейронку (модель YoloV8)
-        self.recognited_objects, yolo_mat_img, self.sqr_arr = detect_obj(self.cv_img.copy()) # ['person', 'bicyucle', 'person']
+        self.recognited_objects, yolo_mat_img, self.sqr_arr = detect_obj(self.cv_img.copy()) # ['person', 'bicycle', 'person']
+
+        # Выводим количество объектов
+        self.total_count_label.setText(str(len(self.recognited_objects)))
 
         # Очистка выпадающего списка
         self.itemComboBox.clear()
         self.itemComboBox.addItem('Все ' + str(len(self.recognited_objects)) + ' обьектов')
 
         # Заполнение выпадающего списка
-        self.itemComboBox.addItems(set(self.recognited_objects))
+        unique_objects = set(self.recognited_objects)
+        dropbox_text = set()
+        for val in unique_objects:
+            dropbox_text.add(val + " " + str(len(list(filter(lambda x: x == val, self.recognited_objects)))) + " обьект (ов)")
+        self.itemComboBox.addItems(dropbox_text)
 
         # Вывод всех изображений
         self.original_image.setPixmap(self.convert_cv_qt(self.cv_img))              # Ориг кадр
@@ -102,12 +129,17 @@ class Window(QMainWindow):
 
     def use_filter(self):
         """Применение фильтров"""
+        count = 0
         filtered_img = self.cv_img.copy()
         for i in range(len(self.recognited_objects)):                                                   # Нанесение квадратиков на изображение с фильтрами
             if 'Все' in self.filter or self.recognited_objects[i] in self.filter:
+                count += 1
                 cv2.rectangle(filtered_img, self.sqr_arr[i][0], self.sqr_arr[i][1], (255, 0, 255), 3)   # Нанесение квадратика на изображение с фильтрами
         cv2.resize(filtered_img, (780, 450))                                                            # Изменяем размер картинки
         self.recognition_with_filters_image.setPixmap(self.convert_cv_qt(filtered_img, 780, 448))       # Кадр с квадратиками с фильтрами
+
+        # Выводим количество отфильтрованных объектов
+        self.filtered_count_label.setText(str(count))
 
     def convert_cv_qt(self, cv_img, width = 380, height = 220):
         """Конвертация CV изображения в QPixmap"""
